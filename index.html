@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Ависалес</title>
+	<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+	<h1>Авиасалес11222</h1>
+	<main>
+		<section class="wrapper">
+			<form class="form-search">
+				<div class="wrapper__search">
+					<div class="input" style="display: block;">
+						<label>Откуда
+							<input type="text" class="input__cities-from" required>
+						</label>
+						<ul class="dropdown dropdown__cities-from">
+
+						</ul>
+					</div>
+
+					<div class="input">
+						<label>Куда
+							<input type="text" class="input__cities-to" required>
+						</label>
+						<ul class="dropdown dropdown__cities-to">
+
+						</ul>
+					</div>
+
+					<div class="input input__cities-from">
+						<label>Отправление
+							<input type="date" class="input__date-depart" required>
+						</label>
+					</div>
+				</div>
+
+				<div class="wrapper__button">
+					<button type="submit" class="button button__search">
+						<span class="button__search-text">Найти билеты</span>
+					</button>
+				</div>
+			</form>
+		</section>
+		<section class="wrapper">
+
+			<!-- <section class="wrapper__ticket" id="cheapest-ticket">
+				<h2>Самый дешевый билет на выбранную дату</h2>
+				
+			</section> -->
+
+			<!-- <section class="block__ticket" id="other-cheap-tickets">
+				<h2>Самые дешевые билеты на другие даты</h2>
+			</section> -->
+		</section>
+	</main>
+	<script>
+		const formSearch = document.querySelector('div'),
+				inputCitiesFrom = document.querySelector('.input__cities-from'),
+				dropdownCitiesFrom = document.querySelector('.dropdown__cities-from'),
+				inputCitiesTo = document.querySelector('.input__cities-to'),
+				dropdownCitiesTo = document.querySelector('.dropdown__cities-to');
+
+		const obj = {
+			key: 'value',
+			'key two': 'value2',
+			key3: false,
+			key4: {
+				a: 1,
+				b: 'dva',
+			},
+			keyNext: ['array', 5, { a:1, b:2}, [true, false, 0]],
+		}
+
+		//Данные
+		const citiesApi = 'http://api.travelpayouts.com/data/ru/cities.json',
+				proxy = 'https://cors-anywhere.herokuapp.com/';
+		const city = ['Москва','Piter','Ufa','Odessa','Yekaterinburg','Shimkent', 'Dnepr', 'Kaliningrad','Wroclaw',
+		'Rostov-na-Donu', 'Dmitrov','Dubna']; //список городов
+
+
+		const getData = (url, callback) => {
+			const request = new XMLHttpRequest();
+			request.open('GET', url);
+
+			request.addEventListener('readystatechange', () => {
+				if(request.readyState !== 4) return;
+
+				if(request.status === 200) {
+					callback(request.response);
+				} else {
+					console.error(request.status)
+				}
+			})
+			request.send();
+		}
+
+
+		//функция показываем отфильтрованные города в выпадающем списке
+		const showCity = (input, list) => {
+			list.textContent = ''; //очищаем список, после каждого ввода
+			if (input.value !== '') { //условие, когда инпут непустой показываем список городов, когда пустой функция не срабатывает
+				const filterCity = city.filter((item) => { //новый массив для фильтрованного списка
+					const fixItem = item.toLowerCase(); //приводим все названия городов к нижнему регистру
+					return  fixItem.includes(input.value.toLowerCase()); //приводим введённый в инпуте символ к нижнему регистру, далее если айтем содержит элемент ввода в инпут-- возвращаем в новый массив
+
+				})
+				filterCity.forEach((item) => { //в фильтрованном массиве создаём лишку для списка
+					const li = document.createElement('li');
+					li.classList.add('dropdown__city');
+					li.textContent = item;
+					list.append(li);
+				});
+			}
+		}
+		//функция вставляем кликнутый ли (выбранный город) в значение инпут
+		const enterCityInput = (event, input, list) => {
+			const target = event.target; //определяем кликнутый ли
+			if(target.tagName.toLowerCase() === 'li') { // проверяем ли , ли это
+				input.value = target.textContent; //вставляем значение ли в инпут
+				list.textContent = '';//убираем выпадающее меню
+			};
+		}
+
+
+
+
+		//Манипуляции с городами в инпуте ввода "откуда"
+		inputCitiesFrom.addEventListener('input', () => {
+			showCity(inputCitiesFrom, dropdownCitiesFrom); //передаём в функцию нужный инпут и нужный выпадающий список
+		});
+		//Манипуляции с городами в инпуте ввода "откуда"
+		inputCitiesTo.addEventListener('input', () => {
+			showCity(inputCitiesTo, dropdownCitiesTo); //передаём в функцию нужный инпут и нужный выпадающий список
+		});
+
+		//Кликаем по выпавшему списку и вставляем значение в инпут велью "откуда"
+		dropdownCitiesFrom.addEventListener('click', (event) => {
+			enterCityInput(event,inputCitiesFrom, dropdownCitiesFrom);
+		});
+		//Кликаем по выпавшему списку и вставляем значение в инпут велью "куда"
+		dropdownCitiesTo.addEventListener('click', (event) => {
+			enterCityInput(event,inputCitiesTo, dropdownCitiesTo);
+		});
+
+
+
+		//Вызовы функций
+		getData(proxy + citiesApi, (data) => {
+				console.log(data)
+		});
+	</script>
+</body>
+
+</html>
+
+
+
+<!-- <h3 class="agent">Aviakassa</h3>
+<div class="ticket__wrapper">
+	<div class="left-side">
+		<a href="https://www.aviasales.ru/search/SVX2905KGD1" class="button button__buy">Купить
+			за 19700₽</a>
+	</div>
+	<div class="right-side">
+		<div class="block-left">
+			<div class="city__from">Вылет из города
+				<span class="city__name">Екатеринбург</span>
+			</div>
+			<div class="date">29 мая 2020 г.</div>
+		</div>
+
+		<div class="block-right">
+			<div class="changes">Без пересадок</div>
+			<div class="city__to">Город назначения:
+				<span class="city__name">Калининград</span>
+			</div>
+		</div>
+	</div>
+</div> -->
