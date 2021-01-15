@@ -48,14 +48,14 @@
 		</form>
 	</section>
 	<section class="wrapper">
-
+		<h2>Самый дешевый билет на выбранную дату</h2>
 		<section class="wrapper__ticket" id="cheapest-ticket">
-			<h2>Самый дешевый билет на выбранную дату</h2>
+
 
 		</section>
-
+		<h2>Самые дешевые билеты на другие даты</h2>
 		<section class="block__ticket" id="other-cheap-tickets">
-			<h2>Самые дешевые билеты на другие даты</h2>
+
 		</section>
 	</section>
 </main>
@@ -67,7 +67,7 @@
 			dropdownCitiesTo = document.querySelector('.dropdown__cities-to'),
 			inputDateDepart = document.querySelector('.input__date-depart'),
 			cheapestTicket = document.querySelector('#cheapest-ticket'),
-			otherCheapTickets = document.querySelector('#cheapest-ticket');
+			otherCheapTickets = document.querySelector('#other-cheap-tickets');
 
 	const obj = {
 		key: 'value',
@@ -81,14 +81,16 @@
 	}
 
 	//Данные
+	// http://api.travelpayouts.com/data/ru/cities.json
 	const citiesApi = './database/cities.json',
 			proxy = 'https://cors-anywhere.herokuapp.com/',
 			apiKEY = '0d957685c6bf0fff4924547d548feffa',
-			calendar = 'http://min-prices.aviasales.ru/calendar_preload';
-	let city = []; //список городов
+			calendar = 'http://min-prices.aviasales.ru/calendar_preload',
+			MAX_COUNT = 10;
+	let city = []; //список городов, получаем с API
 
 	//Запрос в авиасейлс по городам
-	const getData = (url, callback) => {
+	const getData = (url, callback, reject = console.error) => {
 		const request = new XMLHttpRequest();
 		request.open('GET', url);
 
@@ -98,12 +100,14 @@
 			if (request.status === 200) {
 				callback(request.response);
 			} else {
-				console.error(request.status)
+				reject(request.status)
 			}
 		})
+
+
+
 		request.send();
 	}
-
 
 	//функция показываем отфильтрованные города в выпадающем списке
 	const showCity = (input, list) => {
@@ -137,7 +141,27 @@
 		console.log(objCity);
 		return objCity.name;//когда совпадение найдено, возвращаем в вёсртку название города вместо кода
 	}
+	//Формируем ссылку с заказом на авиасейлс
+	const  getLinkAviasales = (data) => {
+		let link = 'https://www.aviasales.ru/search/'
+		link += data.origin;
+		const date = new Date(data.depart_date);
 
+		const day = date.getDate();
+
+		const month = date.getMonth()+1;
+
+		link += day < 10 ? '0' + day : day; //добавляем ноль перед днём, если индекс дня меньше 10
+		console.log(date.getDate(),date.getMonth()+1);
+
+		link += month < 10 ? '0' + month : month; //добавляем ноль перед месяцем, если индекс месяца меньше 10
+
+		link += data.destination; //Добавляем в ссылку город прибытия
+
+		link += 1; //в классификации по авиабилетам, 1 в конце это значит летит 1 взрослый(в программе по умолчанию летает 1 взрослый)
+
+		return link;
+	}
 
 
 	//В вёрстку строки самый дешёвый билет, в зависимости от поступивших данных с сервера вставляем строку
@@ -170,7 +194,7 @@
 			deep = `<h3 class="agent">${data.gate}</h3>
 <div class="ticket__wrapper">
 \t<div class="left-side">
-\t\t<a href="https://www.aviasales.ru/search/SVX2905KGD1" class="button button__buy">Купить
+\t\t<a href="${getLinkAviasales(data)}" class="button button__buy" target="_blank">Купить
 \t\t\tза ${data.value}₽</a>
 \t</div>
 \t<div class="right-side">
@@ -212,10 +236,19 @@
 				return -1;
 			}
 			return  0;
+
+
 		});
 
 		//Более короткий вариант сортировки по числам
 		// cheapTickets.sort((a,b) => a.value - b.value);
+
+
+		//Добавляем 10 самых дешёвых билетов, в секцию дешёвые билеты на другие даты
+		for (let i=0; i < cheapTickets.length && i < MAX_COUNT; i++) {
+			const ticket = createCard(cheapTickets[i]); //запускаем функцию создания верстки
+			otherCheapTickets.append(ticket); //добавляем в нужную секцию
+		}
 
 		console.log(cheapTickets)
 	};
@@ -252,7 +285,10 @@
 	//При удачной отправке формы, создаётся объект с параметрами заказа
 	formSearch.addEventListener('submit', (event) => {
 		event.preventDefault();
-		cheapestTicket.textContent =''; //очищаем поля результатов поиска, после каждого ново
+
+
+		cheapestTicket.textContent =''; //очищаем поля результатов поиска, после каждого нового запроса
+		otherCheapTickets.textContent =''; //очищаем поля результатов поиска, после каждого нового запроса
 		const cityFrom = city.find((item) => {
 			return inputCitiesFrom.value === item.name  //Возвращаем , когда находим совпадение данных из инпута с данными из city
 		})
@@ -271,6 +307,10 @@
 
 			getData(proxy + calendar + requestData, (response) => {
 				renderCheap(response, formData.when);
+
+			}, error => {
+				alert('В этом направлении нет рейсов');
+				console.error('Ошибка', error)
 			})
 		} else {
 			alert('Введите название города!!')
@@ -293,6 +333,9 @@
 			}
 			return  0;
 		});
+	}, (e) => {
+		alert('В этом направлениии нет рейсов!');
+		console.log('Ошибка', e);
 	});
 
 
@@ -301,4 +344,7 @@
 
 </html>
 
-
+<!--15.01.2021 Сделать норм дизайн (например как у яндекс)-->
+<!--сделать свистелку-перделку, когда ищет рейс, чтобы юзер с сайта не уходил-->
+<!--сделать день-ночь-->
+<!--сделать модалки вместо алертов-->
